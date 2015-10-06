@@ -26,16 +26,23 @@ class MyHTMLParser(HTMLParser):
                 self.vocabulary.append(data_words[i])
 
 
+def pre_process(vocabulary):
+    cv = CountVectorizer(stop_words="english")
+    cv.fit_transform(vocabulary)
+    cv.strip_accents = True
+    cv.lowercase = True
+
+    return cv.vocabulary_
+
 def handle_html(path):
     file = open(path)
     html = file.read()
     #print(html)
-    cv = CountVectorizer(stop_words="english")
     parser = MyHTMLParser()
     parser.feed(html)
     vocabulary = parser.get_vocabulary()
-    cv.fit_transform(vocabulary)
-    return cv.vocabulary_
+    word_list = pre_process(vocabulary)
+    return word_list
 
 print(handle_html("001.html"))
 
