@@ -7,8 +7,9 @@ Generate baseline clusterings
 import os
 from xml.dom import minidom
 
-input_dir = "training"
-output_dir = "training.bl"
+
+input_dir = "test"
+output_dir = "output"
 
 
 def baseline(name):
@@ -21,6 +22,18 @@ def baseline(name):
     itemlist = xmldoc.getElementsByTagName('doc')
     docs = [s.attributes['rank'].value for s in itemlist]
 
+    out_oio = open(output_dir+ "/" + name + ".clust.xml", 'w')
+    out_oio.write(header)
+    for idx in enumerate(docs): #TODO find a test to see how many clusters there is
+        out_oio.write('\t<entity id="' + str(idx) + '">\n')
+        for d in enumerate(docs): #TODO find a test to see how many entries in that cluster
+            string = output_dir+"/"+name+"/0"+ str(d)+".html"
+            if os.path.getsize(string) > 400:
+                out_oio.write('\t\t<doc rank="' + d + '" />\n')
+        out_oio.write('\t</entity>\n')
+    out_oio.write(footer)
+    out_oio.close()
+    """
     # All-in-one
     out_aio = open(output_dir + "/all-in-one/" + name + ".clust.xml", 'w')
     out_aio.write(header)
@@ -40,7 +53,7 @@ def baseline(name):
         out_oio.write('\t</entity>\n')
     out_oio.write(footer)
     out_oio.close()
-
+    """
 
 for name in os.listdir(input_dir):
     baseline(name)
