@@ -39,7 +39,7 @@ def tokenize_and_stem(text):
     return stems
 
 def pre_process(input):
-    tfidf_vector = TfidfVectorizer(max_df=0.7, min_df=0.01, max_features=2000,
+    tfidf_vector = TfidfVectorizer(max_df=0.8, min_df=0.01, max_features=2000,
                                  stop_words='english',
                                  use_idf=True, tokenizer=tokenize_and_stem)
     matrix = tfidf_vector.fit_transform(input)
@@ -52,7 +52,6 @@ def handle_html(path):
     parser = MyHTMLParser()
     parser.feed(html)
     vocabulary = parser.get_vocabulary()
-    #word_list = pre_process(vocabulary)
     return vocabulary
 
 

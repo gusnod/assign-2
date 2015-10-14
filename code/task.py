@@ -2,84 +2,80 @@ from __future__ import division
 __author__ = 'Louis'
 
 import os
-import numpy as np
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.metrics.pairwise import cosine_similarity
+import scipy.cluster.hierarchy as hier
+from sklearn.metrics.pairwise import cosine_distances
 from html_handle import handle_html
 from html_handle import pre_process
-from xml.dom import minidom
-from nltk.stem.snowball import SnowballStemmer
-import nltk
-import re
 
-stemmer = SnowballStemmer("english")
-
-def baseline(name, labels):
-    xmldoc = minidom.parse(input_dir + "/" + name + "/" + name + ".xml")
-    itemlist = xmldoc.getElementsByTagName("corpus")
-    person_name = itemlist[0].attributes['search_string'].value
-    header = '<?xml version="1.0" encoding="UTF-8"?>\n<clustering name="' + person_name + '">"\n'
+def printout(name, arr):
+    header = '<?xml version="1.0" encoding="UTF-8"?>\n<clustering name="' + name + '">"\n'
     footer = '</clustering>\n'
+    out = open(output_test+ "/" + name + ".clust.xml", 'w')
+    out.write(header)
+    for i in range(len(arr)):
+        out.write('\t<entity id="' + str(i) + '">\n')
+        for j in range(len(arr[i])):
+            out.write('\t\t<doc rank="' + str(arr[i][j]) + '" />\n')
+        out.write('\t</entity>\n')
+    out.write(footer)
+    out.close()
+    #print("writing end")
 
-    itemlist = xmldoc.getElementsByTagName('doc')
-    docs = [s.attributes['rank'].value for s in itemlist]
+def sortClusters(arr):
+    output = []
 
-    out_oio = open(output_test+ "/" + name + ".clust.xml", 'w')
-    out_oio.write(header)
-    for idx in enumerate(labels): #TODO find a test to see how many clusters there is
-        out_oio.write('\t<entity id="' + str(idx) + '">\n')
-        for d in labels[idx]: #TODO find a test to see how many entries in that cluster
-            out_oio.write('\t\t<doc rank="' + d + '" />\n')
-        out_oio.write('\t</entity>\n')
-    out_oio.write(footer)
-    out_oio.close()
+    for i in range(max(arr)):
+        output.append([])
+        for j in range(len(arr)):
+            if i+1 == arr[j]:
+                output[i].append(j)
+
+    return output
 
 input_dir = "../training"
 input_test = "../test"
 output_test = "../output"
 
-#d = defaultdict(list)
-
-ag = AgglomerativeClustering(compute_full_tree="auto", linkage= "complete")
+"""
 for name in os.listdir(input_dir):
     streng = input_dir + "/" + name + "/docs"
     vocabulary = []
-    #print(name)
+    print(name)
     for site in os.listdir(streng):
         nyStreng = input_dir + "/" + name + "/docs/" + site
-        if os.path.getsize(nyStreng) > 400:
-            voc = handle_html(nyStreng)
-            vocabulary.append(voc)
-            #d[name].append(voc)
+        voc = handle_html(nyStreng)
+        vocabulary.append(voc)
     try:
         matrix = pre_process(vocabulary)
     except ValueError:
-        print("oops")
+        print(name + " failed to read")
 
-    dist = 1 - cosine_similarity(matrix)
-    ag.fit(dist)
-    #print("fitted")
+    dist = cosine_distances(matrix)
+    link = hier.linkage(dist, method="average")
+    clust = hier.fcluster(link, t=0.1)
+    #print(clust)
 
+
+"""
 print("starting predictions")
 for name in os.listdir(input_test):
     streng = input_test + "/" + name + "/docs"
     vocabulary = []
-    print(name)
+    #print(name)
     for site in os.listdir(streng):
         nyStreng = input_test + "/" + name + "/docs/" + site
-        if os.path.getsize(nyStreng) > 400:
-            voc = handle_html(nyStreng)
-            vocabulary.append(voc)
-
+        voc = handle_html(nyStreng)
+        vocabulary.append(voc)
     try:
         matrix = pre_process(vocabulary)
     except ValueError:
-        print("oops")
+        print(name + " failed to predict")
 
-    dist = 1 - cosine_similarity(matrix)
-    pred = ag.fit_predict(dist)
-    print(pred)
-
+    dist = cosine_distances(matrix)
+    link = hier.linkage(dist, method="centroid", metric="euclidean")
+    clust = hier.fcluster(link, t=0.08)
+    d = sortClusters(clust)
+    printout(name,d)
+    #print(pred)
 
 print("done")
-
